@@ -1,0 +1,8 @@
+services:
+  main:
+    ports:
+      - 127.0.0.1:19229:9229
+    volumes:
+      - ./apps:/opt/apps
+      - ./modules:/opt/modules
+      - ./public:/opt/public
