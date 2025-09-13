@@ -1,0 +1,353 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      UserRole @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  accounts  Account[]
+  projects  Project[]
+  reports   Report[]
+
+  @@map("users")
+}
+
+model Account {
+  id          String   @id @default(cuid())
+  name        String
+  yandexLogin String   @unique
+  accessToken String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns Campaign[]
+
+  @@map("accounts")
+}
+
+model Campaign {
+  id               String           @id @default(cuid())
+  yandexId         String           @unique
+  name             String
+  type             CampaignType
+  status           CampaignStatus
+  budget           Decimal?
+  startDate        DateTime?
+  endDate          DateTime?
+  targetingSettings Json?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Relations
+  accountId String
+  account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  
+  adGroups  AdGroup[]
+  keywords  Keyword[]
+  stats     CampaignStats[]
+
+  @@map("campaigns")
+}
+
+model AdGroup {
+  id       String         @id @default(cuid())
+  yandexId String         @unique
+  name     String
+  type     AdGroupType
+  status   AdGroupStatus
+  bids     Json?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  // Relations
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  ads      Ad[]
+  keywords Keyword[]
+  stats    AdGroupStats[]
+
+  @@map("ad_groups")
+}
+
+model Keyword {
+  id       String        @id @default(cuid())
+  yandexId String        @unique
+  text     String
+  bid      Decimal?
+  status   KeywordStatus
+  matchType MatchType
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relations
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  adGroupId String?
+  adGroup   AdGroup? @relation(fields: [adGroupId], references: [id], onDelete: SetNull)
+  
+  stats KeywordStats[]
+
+  @@map("keywords")
+}
+
+model Ad {
+  id       String    @id @default(cuid())
+  yandexId String    @unique
+  title    String
+  text     String
+  url      String?
+  status   AdStatus
+  type     AdType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  adGroupId String
+  adGroup   AdGroup @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
+
+  @@map("ads")
+}
+
+model CampaignStats {
+  id          String   @id @default(cuid())
+  date        DateTime
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  cost        Decimal  @default(0)
+  conversions Int      @default(0)
+  revenue     Decimal  @default(0)
+  
+  // Calculated metrics
+  ctr         Decimal? // Click-through rate
+  cpc         Decimal? // Cost per click
+  cpm         Decimal? // Cost per mille
+  roi         Decimal? // Return on investment
+  roas        Decimal? // Return on ad spend
+  
+  createdAt   DateTime @default(now())
+
+  // Relations
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+  @@map("campaign_stats")
+}
+
+model AdGroupStats {
+  id          String   @id @default(cuid())
+  date        DateTime
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  cost        Decimal  @default(0)
+  conversions Int      @default(0)
+  revenue     Decimal  @default(0)
+  
+  // Calculated metrics
+  ctr         Decimal?
+  cpc         Decimal?
+  cpm         Decimal?
+  
+  createdAt   DateTime @default(now())
+
+  // Relations
+  adGroupId String
+  adGroup   AdGroup @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([adGroupId, date])
+  @@map("ad_group_stats")
+}
+
+model KeywordStats {
+  id          String   @id @default(cuid())
+  date        DateTime
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  cost        Decimal  @default(0)
+  conversions Int      @default(0)
+  revenue     Decimal  @default(0)
+  position    Decimal?
+  qualityScore Int?
+  
+  // Calculated metrics
+  ctr         Decimal?
+  cpc         Decimal?
+  
+  createdAt   DateTime @default(now())
+
+  // Relations
+  keywordId String
+  keyword   Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+
+  @@unique([keywordId, date])
+  @@map("keyword_stats")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  settings    Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reports Report[]
+
+  @@map("projects")
+}
+
+model Report {
+  id          String     @id @default(cuid())
+  name        String
+  type        ReportType
+  parameters  Json
+  schedule    String?    // Cron expression
+  isActive    Boolean    @default(true)
+  lastRunAt   DateTime?
+  nextRunAt   DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+model Insight {
+  id          String      @id @default(cuid())
+  type        InsightType
+  title       String
+  description String
+  data        Json
+  confidence  Decimal     @default(0)
+  impact      ImpactLevel
+  status      InsightStatus @default(NEW)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("insights")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  USER
+  VIEWER
+}
+
+enum CampaignType {
+  SEARCH
+  DISPLAY
+  MOBILE
+  SMART
+}
+
+enum CampaignStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+  DRAFT
+}
+
+enum AdGroupType {
+  SEARCH
+  DISPLAY
+  MOBILE_APP
+}
+
+enum AdGroupStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum KeywordStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum MatchType {
+  EXACT
+  PHRASE
+  BROAD
+}
+
+enum AdStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+  REJECTED
+}
+
+enum AdType {
+  TEXT
+  IMAGE
+  VIDEO
+  DYNAMIC
+}
+
+enum ReportType {
+  CAMPAIGN_PERFORMANCE
+  KEYWORD_ANALYSIS
+  GEOGRAPHIC_REPORT
+  TIME_ANALYSIS
+  COMPETITIVE_ANALYSIS
+  ROI_OPTIMIZATION
+}
+
+enum InsightType {
+  PERFORMANCE_ALERT
+  BUDGET_RECOMMENDATION
+  BID_OPTIMIZATION
+  KEYWORD_OPPORTUNITY
+  NEGATIVE_KEYWORD
+  AD_COPY_SUGGESTION
+  GEOGRAPHIC_INSIGHT
+  TIME_OPTIMIZATION
+}
+
+enum ImpactLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum InsightStatus {
+  NEW
+  VIEWED
+  APPLIED
+  DISMISSED
+}
