@@ -1,0 +1,42 @@
+{
+  "name": "yandex-direct-manager",
+  "version": "1.0.0",
+  "description": "Система управления эффективностью рекламных кампаний в Яндекс.Директ",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "modules/*"
+  ],
+  "scripts": {
+    "dev": "docker-compose -f compose.yaml -f compose.dev.yaml up",
+    "dev:build": "docker-compose -f compose.yaml -f compose.dev.yaml up --build",
+    "prod": "docker-compose -f compose.yaml up -d",
+    "db": "docker-compose -f compose.db.yaml up -d",
+    "db:stop": "docker-compose -f compose.db.yaml down",
+    "logs": "docker-compose logs -f",
+    "clean": "docker-compose down -v && docker system prune -f",
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "eslint apps/ modules/ --ext .js,.ts,.jsx,.tsx",
+    "lint:css": "stylelint 'apps/**/*.{css,scss}' 'modules/**/*.{css,scss}'",
+    "format": "prettier --write 'apps/**/*.{js,ts,jsx,tsx,json,css,scss,md}' 'modules/**/*.{js,ts,jsx,tsx,json,css,scss,md}'",
+    "test": "npm run test --workspaces",
+    "build": "npm run build --workspaces",
+    "install:all": "npm install && npm install --workspaces"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.1.0",
+    "stylelint": "^15.11.0",
+    "stylelint-config-standard": "^34.0.0",
+    "typescript": "^5.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
