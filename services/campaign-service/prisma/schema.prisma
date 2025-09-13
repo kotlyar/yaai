@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts    Account[]
+  campaigns   Campaign[]
+  
+  @@map("users")
+}
+
+model Account {
+  id          String   @id @default(uuid())
+  userId      String
+  yandexId    String   @unique
+  name        String
+  token       String
+  refreshToken String?
+  tokenExpiry DateTime?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns   Campaign[]
+  
+  @@map("accounts")
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  userId      String
+  accountId   String
+  yandexId    String?
+  name        String
+  status      CampaignStatus @default(DRAFT)
+  type        CampaignType
+  budget      Decimal
+  dailyBudget Decimal?
+  startDate   DateTime?
+  endDate     DateTime?
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account     Account    @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  adGroups    AdGroup[]
+  keywords    Keyword[]
+  
+  @@map("campaigns")
+}
+
+model AdGroup {
+  id          String   @id @default(uuid())
+  campaignId  String
+  yandexId    String?
+  name        String
+  status      AdGroupStatus @default(ACTIVE)
+  settings    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  ads         Ad[]
+  keywords    Keyword[]
+  
+  @@map("ad_groups")
+}
+
+model Ad {
+  id          String   @id @default(uuid())
+  adGroupId   String
+  yandexId    String?
+  title       String
+  text        String
+  url         String
+  displayUrl  String?
+  status      AdStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  adGroup     AdGroup @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
+  
+  @@map("ads")
+}
+
+model Keyword {
+  id          String   @id @default(uuid())
+  campaignId  String
+  adGroupId   String?
+  text        String
+  matchType   MatchType
+  bid         Decimal
+  status      KeywordStatus @default(ACTIVE)
+  yandexId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  adGroup     AdGroup? @relation(fields: [adGroupId], references: [id], onDelete: SetNull)
+  
+  @@map("keywords")
+}
+
+enum Role {
+  USER
+  ADMIN
+  MANAGER
+}
+
+enum CampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+  ENDED
+}
+
+enum CampaignType {
+  SEARCH
+  DISPLAY
+  MOBILE
+  SMART
+}
+
+enum AdGroupStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum AdStatus {
+  ACTIVE
+  PAUSED
+  REJECTED
+  ARCHIVED
+}
+
+enum KeywordStatus {
+  ACTIVE
+  PAUSED
+  REJECTED
+  ARCHIVED
+}
+
+enum MatchType {
+  EXACT
+  PHRASE
+  BROAD
+}
