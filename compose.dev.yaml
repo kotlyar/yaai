@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    volumes:
+      - ./apps/api-gateway:/app
+      - /app/node_modules
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:3001
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    command: npm run dev
+
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+    volumes:
+      - ./apps/auth-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  campaign-service:
+    build:
+      context: ./apps/campaign-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+    volumes:
+      - ./apps/campaign-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  analytics-service:
+    build:
+      context: ./apps/analytics-service
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+    volumes:
+      - ./apps/analytics-service:/app
+      - /app/node_modules
+    command: npm run dev
+
+  job-processor:
+    build:
+      context: ./apps/job-processor
+      dockerfile: Dockerfile.dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./apps/job-processor:/app
+      - /app/node_modules
+    command: npm run dev

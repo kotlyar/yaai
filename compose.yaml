@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # API Gateway / Load Balancer
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api-gateway
+      - frontend
+    networks:
+      - yandex-direct-network
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./apps/api-gateway
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    depends_on:
+      - auth-service
+      - campaign-service
+      - analytics-service
+    networks:
+      - yandex-direct-network
+
+  # Frontend Application
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=http://api-gateway:3001
+    networks:
+      - yandex-direct-network
+
+  # Authentication Service
+  auth-service:
+    build:
+      context: ./apps/auth-service
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/yandex_direct_auth
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - yandex-direct-network
+
+  # Campaign Management Service
+  campaign-service:
+    build:
+      context: ./apps/campaign-service
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/yandex_direct_campaigns
+      - REDIS_URL=redis://redis:6379/1
+      - YANDEX_DIRECT_API_URL=https://api.direct.yandex.com/json/v5
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - yandex-direct-network
+
+  # Analytics Service
+  analytics-service:
+    build:
+      context: ./apps/analytics-service
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/yandex_direct_analytics
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - REDIS_URL=redis://redis:6379/2
+    depends_on:
+      - postgres
+      - clickhouse
+      - redis
+    networks:
+      - yandex-direct-network
+
+  # Background Jobs Processor
+  job-processor:
+    build:
+      context: ./apps/job-processor
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379/3
+      - DATABASE_URL=postgresql://postgres:password@postgres:5432/yandex_direct_jobs
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - yandex-direct-network
+
+networks:
+  yandex-direct-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  clickhouse_data:

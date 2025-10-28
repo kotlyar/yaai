@@ -1,0 +1,15 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Установка зависимостей
+COPY package*.json ./
+RUN npm ci
+
+# Копирование исходного кода
+COPY . .
+
+EXPOSE 3001
+
+# Команда по умолчанию переопределяется в docker-compose
+CMD ["npm", "run", "dev"]
