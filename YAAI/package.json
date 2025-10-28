@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "scripts": {
+    "start:dev": "TARGET=dev docker-compose -f compose.yaml -f compose.dev.yaml up",
+    "start:prod": "TARGET=prod docker-compose up",
+    "build": "node apps/main/esbuild.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0"
+  }
+}

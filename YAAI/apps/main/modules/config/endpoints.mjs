@@ -1,0 +1,9 @@
+/* Адреса методов API */
+export const analyticsEndpoint = '/api/analytics/overview';
+export const campaignsEndpoint = '/api/campaigns';
+export const dashboardEndpoint = '/api/dashboard';
+export const logInEndpoint = '/api/account/login';
+export const projectsEndpoint = '/api/projects';
+export const recommendationsEndpoint = '/api/recommendations';
+export const usersEndpoint = '/api/account/users';
+export const yandexSyncEndpoint = '/api/yandex/sync';

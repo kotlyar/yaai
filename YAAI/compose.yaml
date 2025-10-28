@@ -1,0 +1,23 @@
+services:
+  main:
+    image: yaai
+    container_name: yaai
+    build:
+      context: ./
+      dockerfile: ./apps/main/Dockerfile
+      target: ${TARGET}
+    ports:
+      - 127.0.0.1:10001:80
+    secrets:
+      - YANDEX_DIRECT_TOKEN
+      - OPENAI_API_KEY
+    volumes:
+      - ./data:/opt/data
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://127.0.0.1/healthcheck || exit 1
+
+secrets:
+  YANDEX_DIRECT_TOKEN:
+    file: ./secrets/YANDEX_DIRECT_TOKEN
+  OPENAI_API_KEY:
+    file: ./secrets/OPENAI_API_KEY

@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "scripts": {
+    "start": "ENV=dev nodemon --inspect=0.0.0.0 --experimental-sqlite ./server.mjs"
+  },
+  "dependencies": {
+    "axios": "1.6.5"
+  },
+  "devDependencies": {
+    "markdown-it": "14.1.0"
+  },
+  "optionalDependencies": {
+    "https-proxy-agent": "7.0.5",
+    "nodemon": "3.1.4"
+  }
+}
